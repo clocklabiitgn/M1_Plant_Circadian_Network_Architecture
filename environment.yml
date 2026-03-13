@@ -1,0 +1,16 @@
+name: m1-circadian-network
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - seaborn
+  - networkx
+  - openpyxl
+  - pillow
+  - opencv
+  - tqdm
+  - pip
