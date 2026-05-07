@@ -1,0 +1,440 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy as sp
+from scipy.integrate import odeint
+from math import log
+import pandas as pd
+
+def dCdt(t, C):
+
+
+    v1 = 4.8318   #CL synthesis
+    q1a = 1.4266  #CL light-induced synthesis through PhyA
+    q3a = 8.9432  #CL light-induced synthesis through PhyB
+    eta1 = 0.03  #Normalisation of red light intensity
+    q4a = 5.9277  #CL light-induced synthesis through Cry
+    eta2 = 0.0215  #Normalisation of blue light intensity
+    K1 = 0.1943  #Inhibition: CL by P97
+    K2 = 1.6138  #Inhibition: CL by P51
+    k1L = 0.2866 #CL mRNA degradation (light)
+    k1D = 0.213  #CL mRNA degradation (dark)
+    p1 = 0.8672 #CL translation
+    p1L = 0.2378 #CL light-induced translation
+    d1 = 0.7843  #CL degradation
+    q1b = 3.575  #P97 light-induced synthesis through PhyA
+    q3b = 5.5899 #P97 light-induced synthesis through PhyB
+    q4b = 8.954  #P97 light-induced synthesis through Cry
+    v2 = 1.6822    #P97 synthesis
+    K3 = 2.2275 #Inhibition: P97 by CL
+    K4 = 0.40  #Inhibition: P97 by P51
+    K5 = 0.37 #Inhibition: P97 by EL
+    k2 = 0.35  #P97 mRNA degradation
+    p2 = 0.7858  #P97 translation
+    d2D = 0.3712  #P97 degradation (dark)
+    d2L = 0.2917  #P97 degradation (light)
+    v3 = 1.113  #P51 synthesis
+    K6 = 0.4944  #Inhibition: P51 by CL
+    K7 = 2.4087  #Inhibition: P51 by itself
+    k3 = 0.5819  #P51 mRNA degradation
+    p3 = 0.6142 #P51 translation
+    d3D = 0.5026  #P51 degradation (dark)
+    d3L = 0.5431  #P51 degradation (light)
+    v4 = 2.5012   #EL synthesis
+    K8 = 0.3262  #Inhibition: EL by CL
+    K9 = 1.7974  #Inhibition: EL by P51
+    K10 = 1.1889  #Inhibition: EL by EL
+    k4 = 0.925  #EL mRNA degradation
+    p4 = 1.126  #EL translation
+    de1 = 0.0022 #EL degradation
+    de2 = 0.4741  #EL degradation (COP1)
+    de3 = 0.3765  #EL degradation (COP1: PhyA)
+    de4 = 0.398  #EL degradation (COP1: PhyB)
+    de5 = 0.0003  #EL degradation (COP1: Cry)
+    Ap3 = 0.3868 #PhyA translation
+    Am7 = 0.5503 #PhyA degradation
+    Ak7 = 1.125  #Michaelis constant of PhyA degradation
+    q2 = 0.5767  #Rate constant of light-independent
+    kmpac = 137 #Binding rate of COP1: PhyA
+    kd = 7  #Dissociate rate
+    v5 = 0.1129  #PIF synthesis
+    K11 = 0.3322  #Inhibition: PIF by EL
+    k5 = 0.1591  #PIF mRNA degradation
+    p5 = 0.5293  #PIF translation
+    d5D = 0.4404  #PIF protein degradation (Dark)
+    d5L = 5.0712  #PIF protein degradation (Light)
+    g1 = 0.001  #Baseline hypocotyl growth
+    g2 = 0.18  #PIF-induced hypocotyl growth
+    K12 = 0.86  #Activation: growth by PIF
+    Bp4 = 0.4147  #PhyB translation
+    Bm8 = 0.7728 #PhyB degradation
+    Bk8 = 0.1732  #Michaelis constant of PhyB degradation
+    kmpbc = 7162  #Binding rate of COP1:PhyB
+    Cp5 = 0.4567 #Cry translation
+    Cm9 = 0.867  #Cry degraddation
+    Ck9 = 0.3237  #Michaelis constant of Cry degradation
+    kmcc = 13406  #Binding rate of COP1:Cry
+
+    if Ired != 0 or Iblue != 0:
+        ThetaPhyA = 1
+    else:
+        ThetaPhyA = 0
+
+    if Ired != 0:
+        ThetaPhyB = 1
+    else:
+        ThetaPhyB = 0
+
+    if Iblue != 0:
+        ThetaCry1 = 1
+    else:
+        ThetaCry1 = 0
+    #print('ThetaCry1:', ThetaCry1, 'ThetaPhyA:',ThetaPhyA, 'ThetaPhyB:', ThetaPhyB)
+
+
+    dC = np.zeros((18))
+
+    # LHY mRNA
+    dC[0] = (v1 + (q1a * (C[8] + C[15]) * ThetaPhyA + q3a * (C[12] + C[16]) * log(eta1 * Ired + 1) * ThetaPhyB + q4a * (C[13] + C[17]) * log(eta2 * Iblue + 1) * ThetaCry1)) / (1 + (C[3] / K1) ** 2 + (C[5] / K2) ** 2) - (k1L * ThetaPhyA + k1D * (1 - ThetaPhyA)) * C[0]
+
+    # LHY protein
+    dC[1] = (p1 + p1L * ThetaPhyA) * C[0] - d1 * C[1]
+
+    # P97 mRNA
+    dC[2] = ((q1b * (C[8] + C[15]) * ThetaPhyA + q3b * (C[12] + C[16]) * log(eta1 * Ired + 1) * ThetaPhyB + q4b * (C[13] + C[17]) * log(eta2 * Iblue + 1) * ThetaCry1) + v2) * (1 / (1 + (C[1] / K3) ** 2 + (C[5] / K4) ** 2 + (C[7] / K5) ** 2)) - k2 * C[2]
+
+    # P97 protein
+    dC[3] = p2 * C[2] - d2D * (1 - ThetaPhyA) * C[3] - d2L * ThetaPhyA * C[3]
+
+    # P51 mRNA
+    dC[4] = v3 / (1 + (C[1] / K6) ** 2 + (C[5] / K7) ** 2) - k3 * C[4]
+
+    # P51 protein
+    dC[5] = (p3 * C[4] - d3D * (1 - ThetaPhyA) * C[5] - d3L * ThetaPhyA * C[5])
+
+    # EL mRNA
+    dC[6] = (v4 * ThetaPhyA / (1 + (C[1] / K8) ** 2 + (C[5] / K9) ** 2 + (C[7] / K10) ** 2) - k4 * C[6])
+
+    # EL protein
+    dC[7] = (p4 * C[6] - (de1 + (de2 * C[14] + de3 * C[15] + de4 * C[16] + de5 * C[17]) / (C[14] + C[15] + C[16] + C[17])) * C[7])
+
+    # PHY A
+    dC[8] = (1 - ThetaPhyA) * Ap3 - (Am7 * C[8] / (Ak7 + C[8])) - q2 * ThetaPhyA * C[8] - kmpac * ThetaPhyA * C[8] * C[14] + kd * (1 - ThetaPhyA) * C[15]
+
+    # PIF mRNA
+    dC[9] = v5 / (1 + (C[7] / K11) ** 2) - k5 * C[9]
+
+    # PIF protein
+    dC[10] = p5 * C[9] - d5D * (1 - ThetaPhyA) * C[10] - d5L * ThetaPhyA * C[10]
+
+    # HYP protein
+    dC[11] = g1 + (g2 * C[10] ** 2) / (K12 ** 2 + C[10] ** 2)
+
+    # PHY B
+    dC[12] = Bp4 - ((Bm8 * C[12]) / (Bk8 + C[12])) - kmpbc * ThetaPhyB * C[12] * C[14] + kd * (1 - ThetaPhyB) * C[16]
+
+    # CRY1
+    dC[13] = Cp5 - ((Cm9 * C[13]) / (Ck9 + C[13])) - kmcc * ThetaCry1 * C[13] * C[14] + kd * (1 - ThetaCry1) * C[17]
+
+    # COP1
+    dC[14] = -kmpac * ThetaPhyA * C[8] * C[14] + kd * (1 - ThetaPhyA) * C[15] - kmpbc * ThetaPhyB * C[12] * C[14] + kd * (1 - ThetaPhyB) * C[16] - kmcc * ThetaCry1 * C[13] * C[14] + kd * (1 - ThetaCry1) * C[17] + (
+            Am7 * C[15] / (Ak7 + C[15])) + q2 * ThetaPhyA * C[15] + ((Bm8 * C[16]) / (Bk8 + C[16])) + ((Cm9 * C[17]) / (Ck9 + C[17]))
+
+    # COP1:PHYA
+    dC[15] = kmpac * ThetaPhyA * C[8] * C[14] - kd * (1 - ThetaPhyA) * C[15] - (Am7 * C[15] / (Ak7 + C[15])) - q2 * ThetaPhyA * C[15]
+
+    # COP1:PHYB
+    dC[16] = kmpbc * ThetaPhyB * C[12] * C[14] - kd * (1 - ThetaPhyB) * C[16] - ((Bm8 * C[16]) / (Bk8 + C[16]))
+
+    # COP1:CRY1
+    dC[17] = kmcc * ThetaCry1 * C[13] * C[14] - kd * (1 - ThetaCry1) * C[17] - ((Cm9 * C[17]) / (Ck9 + C[17]))
+
+    return dC
+
+
+Ired = 0
+Iblue = 0
+eta1 = 0
+eta2 = 0
+Ctot = 0
+
+pPlot = []
+
+Nday = 10  # Experimental data collected at Day 10
+
+hyplength = np.zeros((3, 3))
+
+IntensityBB = []
+IntensityRR = []
+
+# DH = 12  #hours of dark phase
+# LH = (24-DH)//2  #hours of light phase
+
+
+# #light intensity varying pattern
+# intensity_pattern = np.concatenate((np.linspace(1, 27, LH), np.linspace(27, 1, LH), np.zeros(DH)))
+
+
+# # LH = 12
+# # #12L:12D with red+blue light conditions
+# # IntensityBB = 1 * 26.62 * np.concatenate((np.ones(24 - LH), np.zeros(LH)))
+# # IntensityRR = 1 * 26.62 * np.concatenate((np.ones(24 - LH), np.zeros(LH)))
+
+# IntensityBB = np.tile((intensity_pattern), Nday)
+# IntensityRR = np.tile((intensity_pattern), Nday)
+
+# Step 1: Read the data from the Excel file
+filename = 'winter_solstice.xlsx'  # Excel file name
+sheet = 0  # Sheet index (0-based for pandas)
+
+# Read the Excel file into a DataFrame
+data = pd.read_excel(filename, sheet_name=sheet)
+# Step 2: Extract and round the temperature column
+#temperature = data['temperature'][0:].round(2).to_numpy()  # Exclude the first row (assumed header)
+
+# Step 3: Extract and round the radiation column for Intensity
+IntensityBB = data['radiation'][0:].round(2).to_numpy()  # Exclude the first row (assumed header)
+IntensityRR = IntensityBB.copy()  # Duplicate IntensityBB for IntensityRR
+
+
+ProteinLevel = []
+C = 1*np.ones((1,18))
+C[0,11] = 0
+C[0,15] = 0
+C[0,16] = 0
+C[0,17] = 0
+
+#12L:12D with red+blue light conditions
+for t in range(len(IntensityRR)):
+    tspan = [t, t + 1]
+    Ired = IntensityRR[t]
+    Iblue = IntensityBB[t]
+
+
+    #solving ODEs
+    sol = odeint(dCdt, C[-1,:], tspan,  tfirst=True)
+
+    C = np.vstack((C, sol[-1]))
+            
+
+
+
+## MANAGING AND PLOTTING THE RESULT DATAPOINTS
+LHYm = C[:,0]
+LHYp = C[:,1]
+P97m = C[:,2]
+P97p = C[:,3]
+P51m = C[:,4]
+P51p = C[:,5]
+ELm = C[:,6]
+ELp = C[:,7]
+PHYA = C[:,8]
+PIFm = C[:,9]
+PIFp = C[:,10]
+HYPp = C[:,11]
+PHYB = C[:,12]
+CRY1 = C[:,13]
+COP1 = C[:,14]
+COP1_PHYA = C[:,15]
+COP1_PHYB = C[:,16]
+COP1_CRY1 = C[:,17]
+t1 = np.arange(48)
+
+
+# Extract values from index 193 to 240 TO ACCOUNT FOR LAST 48 HOURS
+extracted_LHYm = LHYm[198:246]
+extracted_P97m = P97m[198:246]
+extracted_P51m = P51m[198:246]
+extracted_ELm = ELm[198:246]
+
+#save the extracted values to a csv file
+extracted_data = pd.DataFrame({
+    'Time': t1,
+    'LHYm': extracted_LHYm,
+    'P97m': extracted_P97m,
+    'P51m': extracted_P51m,
+    'ELm': extracted_ELm
+})
+extracted_data.to_csv('pay_extracted_data.csv', index=False)
+
+# Select every 4th value TO REPRESENT EXPRESSION IN 48 HOURS BY 12 DATAPOINTS 
+##final_LHYm = extracted_LHYm[::4]
+# final_LHYm = final_LHYm / (np.max(final_LHYm))
+# #final_P97m = extracted_P97m[::4]
+# final_P97m = final_P97m / (np.max(final_P97m))
+# #final_P51m = extracted_P51m[::4]
+# final_P51m = final_P51m / (np.max(final_P51m))
+# #final_ELm = extracted_ELm[::4]
+# final_ELm = final_ELm / (np.max(final_ELm))
+
+final_LHYm = extracted_LHYm / (np.max(extracted_LHYm))
+final_P97m = extracted_P97m / (np.max(extracted_P97m))
+final_P51m = extracted_P51m / (np.max(extracted_P51m))
+final_ELm = extracted_ELm / (np.max(extracted_ELm))
+
+# Ensure all extracted series contain 48 hourly points and 12 sampled points
+if not all(len(arr) == 48 for arr in [extracted_LHYm, extracted_P97m, extracted_P51m, extracted_ELm]):
+    raise ValueError("Expected 48 hourly values from indices 193:241 for the final 48 h window.")
+
+# if not all(len(arr) == 12 for arr in [final_LHYm, final_P97m, final_P51m, final_ELm]):
+#     raise ValueError("Expected 12 sampled points after taking every 4th value from the 48 h window.")
+
+# #DATA FROM DIURNAL DATABASE FOR 12L:12D
+# CCA1 = [1,0.2103924414,0.004865563534,0.001652048271,0.002048384564,0.2242821156,0.9601276518,0.2363342819,0.004804878662,0.002222420108,0.001618812939,0.158643825]
+# LHY = [1,0.1610597922,0.002299572408,0.001533705562,0.001608774472,0.2738896742,0.8145982048,0.1490766132,0.001641628384,0.001385295781,0.001768510142,0.2489356138]
+# PRR9 = [0.02516462135,0.5941586322,0.06640724356,0.0240062392,0.02426667681,0.02394879292,0.0299793476,1,0.05370449679,0.02115800172,0.02493277101,0.01889487929]
+# PRR7 = [0.009492373056,0.4705213059,1,0.120353742,0.01033830292,0.00877799777,0.01088591969,0.6082641814,0.9201192792,0.1746287768,0.03417358761,0.007268623285]
+# PRR5 = [0.01111042835,0.0113074455,1,0.04913184971,0.02114911641,0.01412649207,0.01050684264,0.01047327528,0.8748301379,0.05977572848,0.02864857759,0.01592813895]
+# TOC1 = [0.07126017798,0.03733443937,0.5725810292,0.9327419723,0.3942479506,0.1472609348,0.0785741674,0.02637855462,0.5310921927,1,0.6181423126,0.09367968764]
+# ELF4 = [0.01730516318,0.01573189606,0.3113074214,0.91552571,0.1783884412,0.02987437634,0.0133597224,0.01524730705,0.2780308452,1,0.146027817,0.02179087355]
+# LUX = [0.02160406819,0.01468588815,0.4784510198,1,0.1092163369,0.05740129023,0.02323553,0.01558496534,0.4952856907,0.900776445,0.2078907664,0.04216236673]
+
+#extract data from excel file for natural conditions
+filename = 'normalized_winter_solstice_exp.xlsx'  # Excel file name
+sheet = 0  # Sheet index (0-based for pandas)
+# Read the Excel file into a DataFrame
+data = pd.read_excel(filename, sheet_name=sheet)
+# Extract and round the columns for each gene
+CCA1 = data['CCA1'][0:].round(2).to_numpy()  # Exclude the first row (assumed header)
+LHY = data['LHY'][0:].round(2).to_numpy()
+PRR9 = data['PRR9'][0:].round(2).to_numpy()
+PRR7 = data['PRR7'][0:].round(2).to_numpy()
+PRR5 = data['PRR5'][0:].round(2).to_numpy()
+TOC1 = data['TOC1'][0:].round(2).to_numpy()
+ELF4 = data['ELF4'][0:].round(2).to_numpy()
+LUX = data['LUX'][0:].round(2).to_numpy()  
+
+
+##model efficiency vs experimental data
+def calculate_mae(y_true, y_pred):
+    """
+    Calculate Mean Absolute Error (MAE)
+    """
+    y_true = np.array(y_true, dtype=float)
+    y_pred = np.array(y_pred, dtype=float)
+    return np.mean(np.abs(y_true - y_pred))
+
+def calculate_mse(y_true, y_pred):
+    """
+    Calculate Mean Squared Error (MSE)
+    """
+    y_true = np.array(y_true, dtype=float)
+    y_pred = np.array(y_pred, dtype=float)
+    return np.mean((y_true - y_pred) ** 2)
+
+
+
+experimental_data = np.array([CCA1, LHY, PRR7, PRR9, PRR5, TOC1, ELF4, LUX])
+model_predictions = np.array([
+    final_LHYm, final_LHYm,
+    final_P97m, final_P97m,
+    final_P51m, final_P51m,
+    final_ELm, final_ELm
+])
+
+# Calculate MAE and MSE for pay model RED & BLUE
+mae_model1 = calculate_mae(experimental_data, model_predictions)
+mae_CCA1 = calculate_mae(CCA1, final_LHYm)
+mae_LHY = calculate_mae(LHY, final_LHYm)
+mae_PRR9 = calculate_mae(PRR9, final_P97m)
+mae_PRR7 = calculate_mae(PRR7, final_P97m)
+mae_PRR5 = calculate_mae(PRR5, final_P51m)
+mae_TOC1 = calculate_mae(TOC1, final_P51m)
+mae_ELF4 = calculate_mae(ELF4, final_ELm)
+mae_LUX = calculate_mae(LUX, final_ELm)
+
+
+mse_model1 = calculate_mse(experimental_data, model_predictions)
+mse_CCA1 = calculate_mse(CCA1, final_LHYm)
+mse_LHY = calculate_mse(LHY, final_LHYm)
+mse_PRR9 = calculate_mse(PRR9, final_P97m)
+mse_PRR7 = calculate_mse(PRR7, final_P97m)
+mse_PRR5 = calculate_mse(PRR5, final_P51m)
+mse_TOC1 = calculate_mse(TOC1, final_P51m)
+mse_ELF4 = calculate_mse(ELF4, final_ELm)
+mse_LUX = calculate_mse(LUX, final_ELm)
+
+print("Model pay_red& blue:")
+print("MAE:", mae_model1)
+print("MSE:", mse_model1)
+print("CCA1", "MAE:", mae_CCA1, "MSE:", mse_CCA1 )
+print("LHY", "MAE:", mae_LHY, "MSE:", mse_LHY )
+print("PRR9", "MAE:", mae_PRR9, "MSE:", mse_PRR9 )
+print("PRR7", "MAE:", mae_PRR7, "MSE:", mse_PRR7 )
+print("PRR5", "MAE:", mae_PRR5, "MSE:", mse_PRR5 )
+print("TOC1", "MAE:", mae_TOC1, "MSE:", mse_TOC1 )
+print("ELF4", "MAE:", mae_ELF4, "MSE:", mse_ELF4 )
+print("LUX", "MAE:", mae_LUX, "MSE:", mse_LUX )
+
+#save results to a text file
+with open("pay_performance.txt", "w") as f:
+    f.write("Model pay_red& blue:\n")
+    f.write(f"MAE: {mae_model1}\n")
+    f.write(f"MSE: {mse_model1}\n")
+    f.write(f"CCA1 MAE: {mae_CCA1}, MSE: {mse_CCA1}\n")
+    f.write(f"LHY MAE: {mae_LHY}, MSE: {mse_LHY}\n")
+    f.write(f"PRR9 MAE: {mae_PRR9}, MSE: {mse_PRR9}\n")
+    f.write(f"PRR7 MAE: {mae_PRR7}, MSE: {mse_PRR7}\n")
+    f.write(f"PRR5 MAE: {mae_PRR5}, MSE: {mse_PRR5}\n")
+    f.write(f"TOC1 MAE: {mae_TOC1}, MSE: {mse_TOC1}\n")
+    f.write(f"ELF4 MAE: {mae_ELF4}, MSE: {mse_ELF4}\n")
+    f.write(f"LUX MAE: {mae_LUX}, MSE: {mse_LUX}\n")
+
+
+##PLOTTING MODEL VS EXP DATA
+
+# Manuscript-ready style for small 2x2 inch panels
+FIGSIZE = (2, 2)
+AXIS_LABEL_SIZE = 11
+TICK_LABEL_SIZE = 8
+LEGEND_SIZE =7
+LINE_WIDTH = 1.3
+SPINE_WIDTH = 0.8
+EXPORT_DPI = 600
+
+
+def plot_expression_panel(model_data, exp1, exp2, legend_labels, output_name):
+    fig, ax = plt.subplots(figsize=FIGSIZE)
+    t1 = np.arange(0, 48, 1)
+
+    ax.plot(t1, model_data, linewidth=LINE_WIDTH)
+    ax.plot(t1, exp1, linewidth=LINE_WIDTH)
+    ax.plot(t1, exp2, linewidth=LINE_WIDTH)
+
+    ax.legend(
+        legend_labels,
+        loc='best',
+        fontsize=LEGEND_SIZE,
+        frameon=False,
+        handlelength=1.5,
+        borderaxespad=0.2
+    )
+
+    ax.set_xlabel('Time (h)', fontsize=AXIS_LABEL_SIZE)
+    ax.set_ylabel('Expression', fontsize=AXIS_LABEL_SIZE)
+    ax.set_xlim(0, 48)
+    #ax.set_xticks([0, 12, 24, 36, 48])
+    ax.set_xticks([0, 24, 48])
+    ax.tick_params(axis='both', which='major', labelsize=TICK_LABEL_SIZE, length=2.5, width=0.8, pad=1.5)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(SPINE_WIDTH)
+
+    ax.axvspan(12, 24, facecolor='gray', alpha=0.18, linewidth=0)
+    ax.axvspan(36, 48, facecolor='gray', alpha=0.18, linewidth=0)
+
+    fig.subplots_adjust(
+        top=0.978,
+        bottom=0.073,
+        left=0.058,
+        right=0.977,
+        hspace=0.2,
+        wspace=0.2
+    )
+    fig.savefig(output_name, dpi=EXPORT_DPI, bbox_inches='tight')
+    plt.show()
+
+
+plot_expression_panel(final_LHYm, CCA1, LHY, ["Pay", "CCA1 exp", "LHY exp"], 'pCLm.png')
+plot_expression_panel(final_P51m, PRR5, TOC1, ["Pay", "PRR5 exp", "TOC1 exp"], 'pP51m.png')
+plot_expression_panel(final_P97m, PRR9, PRR7, ["Pay", "PRR9 exp", "PRR7 exp"], 'pP97m.png')
+plot_expression_panel(final_ELm, ELF4, LUX, ["Pay", "ELF4 exp", "LUX exp"], 'pELm.png')

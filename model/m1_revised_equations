@@ -1,0 +1,62 @@
+La = (q1a*(C[8])*ThetaPhyA
+      + q3a*(C[12])*log(eta1*Ired+1)*ThetaPhyB
+      + q4a*(C[13])*log(eta2*Iblue+1)*ThetaCry1)
+Lb = (q1b*(C[8])*ThetaPhyA
+      + q3b*(C[12])*log(eta1*Ired+1)*ThetaPhyB
+      + q4b*(C[13])*log(eta2*Iblue+1)*ThetaCry1)
+
+COP1_total = C[14]+C[15]+C[16]+C[17]
+if COP1_total < 1e-12:
+      COP1_total = 1e-12
+
+# Eq 1: CLm
+dC[0]  = ((v1+La)/(1+(C[3]/K1)**2+(C[5]/K2)**2)
+            - (k1L*ThetaPhyA + k1D*(1-ThetaPhyA))*C[0])
+# Eq 2: CLp
+dC[1]  = (p1+p1L*ThetaPhyA)*C[0] - d1*C[1]
+# Eq 3: P97m
+dC[2]  = ((Lb+v2)/(1+(C[1]/K3)**2+(C[5]/K4)**2+(C[7]/K5)**2)
+            - k2*C[2])
+# Eq 4: P97p
+dC[3]  = p2*C[2] - d2D*(1-ThetaPhyA)*C[3] - d2L*ThetaPhyA*C[3]
+# Eq 5: P51m
+dC[4]  = v3/(1+(C[1]/K6)**2+(C[5]/K7)**2) - k3*C[4]
+# Eq 6: P51p
+dC[5]  = (p3*C[4]
+            - d3D*(1-ThetaPhyA)*C[5]
+            - d3L*ThetaPhyA*C[5]
+            - (dp6*C[18]*C[5])/(Gkp+C[5]))
+# Eq 7: ELm
+dC[6]  = (v4*ThetaPhyA/(1+(C[1]/K8)**2+(C[5]/K9)**2+(C[7]/K10)**2)
+            - k4*C[6])
+# Eq 8: ELp
+dC[7]  = (p4*C[6]
+            - (de1+(de2*C[14]+de3*C[15]+de4*C[16]+de5*C[17])/COP1_total)*C[7])
+# Eq 9: PhyA
+dC[8]  = ((1-ThetaPhyA)*Ap3 - Am7*C[8]/(Ak7+C[8])
+            - q2*ThetaPhyA*C[8] - kmpac*ThetaPhyA*C[8]*C[14] + kd*C[15])
+# Eq 10: PIFm
+dC[9]  = v5/(1+(C[7]/K11)**2+(C[13]/K14)**2) - k5*C[9]
+# Eq 11: PIFp
+dC[10] = p5*C[9] - d5D*(1-ThetaPhyA)*C[10] - d5L*ThetaPhyA*C[10]
+# Eq 12: HYPp
+dC[11] = g1 + g2*C[10]**2/(K12**2+C[10]**2)
+# Eq 13: PhyB
+dC[12] = Bp4 - Bm8*C[12]/(Bk8+C[12]) - kmpbc*ThetaPhyB*C[12]*C[14] + kd*C[16]
+# Eq 14: Cry1
+dC[13] = Cp5 - Cm9*C[13]/(Ck9+C[13]) - kmcc*ThetaCry1*C[13]*C[14] + kd*C[17]
+# Eq 15: COP1
+dC[14] = (-kmpac*ThetaPhyA*C[8]*C[14] + kd*C[15]
+            - kmpbc*ThetaPhyB*C[12]*C[14] + kd*C[16]
+            - kmcc*ThetaCry1*C[13]*C[14] + kd*C[17]
+            + Am7*C[15]/(Ak7+C[15]) + q2*ThetaPhyA*C[15]
+            + Bm8*C[16]/(Bk8+C[16]) + Cm9*C[17]/(Ck9+C[17]))
+# Eq 16: COP1:PhyA
+dC[15] = (kmpac*ThetaPhyA*C[8]*C[14] - kd*C[15]
+            - Am7*C[15]/(Ak7+C[15]) - q2*ThetaPhyA*C[15])
+# Eq 17: COP1:PhyB
+dC[16] = kmpbc*ThetaPhyB*C[12]*C[14] - kd*C[16] - Bm8*C[16]/(Bk8+C[16])
+# Eq 18: COP1:Cry1
+dC[17] = kmcc*ThetaCry1*C[13]*C[14] - kd*C[17] - Cm9*C[17]/(Ck9+C[17])
+# Eq 19: GZp
+dC[18] = Gp6 - (dg1+(dg2*C[14]+dg3*C[15]+dg4*C[16]+dg5*C[17])/COP1_total)*C[18]
