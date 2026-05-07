@@ -274,7 +274,7 @@ Outputs:
 
 ### Natural Light Validation
 
-Run the M1 model under four measured seasonal photoperiods and compare against published expression data.
+Run the M1 model under four measured seasonal light intensities and photoperiods and compare against published expression data.
 
 ```bash
 python model_with_natural_data/trial1_natural_autumn/m1.py
@@ -351,7 +351,7 @@ After knockout simulation, each parameter is assigned to a class:
 | Class | Criterion |
 |-------|-----------|
 | I (Essential) | Complete arrhythmia on knockout |
-| II (Moderate) | Period shift > 5 h |
+| II (Moderate) | Period shift > 0.05 h |
 | III (Minor) | Period shift < 0.05 h |
 
 ---
