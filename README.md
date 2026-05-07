@@ -35,15 +35,15 @@ The circadian clock of *Arabidopsis thaliana* is driven by interlocking transcri
 | P51    | PRR5 / TOC1    |
 | EL     | ELF4 / LUX     |
 
-The **M1 model** extends the legacy "Pay" model by incorporating:
+The **M1 model** extends the "Pay 2022" model by incorporating:
 
-- Phytochrome A (PhyA) and Phytochrome B (PhyB) red-light signalling
-- Cryptochrome 1 (Cry1) blue-light signalling
-- COP1-mediated protein degradation complexes
-- PIF (Phytochrome Interacting Factor) and hypocotyl growth dynamics
 - A GZ regulatory protein
+- COP1-mediated GZ protein degradation
+- P51 protein degradation mediated by GZ
+- PIF (Phytochrome Interacting Factor) inhibtion by Cry
 
-The model is validated against experimental expression data under four natural seasonal photoperiods and against the Pay model benchmark.
+
+The model is validated against experimental expression data under four natural seasonal light intensities and photoperiods and against the Pay model benchmark.
 
 ---
 
@@ -168,21 +168,21 @@ python model/12l12d/comparison_plots.py
 ```
 
 Key outputs in `model/12l12d/`:
-- `model1_extracted_data.csv` — hourly mRNA time-series (LHYm, P97m, P51m, ELm)
+- `model1_extracted_data.csv` — hourly mRNA time-series (all 19 state variables)
 - `model1_performance.txt` — overall and per-gene MAE and MSE
-- Waveform PNGs for all 19 state variables
+- Waveform PNGs for CLm, P97m, P51m, ELm
 - `MAE_comparison_bar.png`, `MAE_pay_vs_M1_scatter.png`
 
 ---
 
 ### Step 2 — Parameter Sweeps
 
-Sweep all 116 model parameters individually (±20–30 % of base values, ~10 points each) under constant-light (LL) and light/dark (LD) conditions. Uses multiprocessing (up to 8 cores).
+Sweep all 72 model parameters individually (0.1x-10x of base values, ~50 points each) under constant-light (LL) and light/dark (LD) conditions. Uses multiprocessing.
 
 ```bash
 cd Static_network_analysis
 
-# LL sweep  (~30–60 min depending on hardware)
+# LL sweep  
 python period_range_auto_ll_m1.py
 
 # LD sweep
@@ -341,7 +341,7 @@ Output: growth-rate curves overlaid on clock waveforms.
 
 Two continuous light signals are computed at each time step:
 - **Red light (Ired)** — drives PhyA and PhyB activation
-- **Blue light (Iblue)** — drives Cry1 activation
+- **Blue light (Iblue)** — drives PhyA and Cry1 activation
 - Normalised by factors `eta1` (red) and `eta2` (blue)
 
 ### Parameter Sensitivity Classification
@@ -351,7 +351,7 @@ After knockout simulation, each parameter is assigned to a class:
 | Class | Criterion |
 |-------|-----------|
 | I (Essential) | Complete arrhythmia on knockout |
-| II (Moderate) | Period shift 0.05–5 h |
+| II (Moderate) | Period shift > 5 h |
 | III (Minor) | Period shift < 0.05 h |
 
 ---
