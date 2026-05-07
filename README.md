@@ -1,6 +1,6 @@
 # M1 Plant Circadian Network Architecture
 
-A computational systems biology project modeling the *Arabidopsis thaliana* circadian clock using a 19-variable ODE system (M1 model). The pipeline covers model simulation, parameter sensitivity analysis, phase-space geometry, gene knockout effects, and network topology — all under both standard and natural seasonal light conditions.
+A computational systems biology project modeling the *Arabidopsis thaliana* circadian clock using a 19-variable ODE system (M1 model). The pipeline covers model simulation under both standard and natural seasonal light conditions, parameter sensitivity analysis, phase-space geometry, gene knockout effects, and network topology — under 12 hours light-12 hours dark (LD) and constant light (LL) conditions.
 
 ---
 
@@ -26,7 +26,7 @@ A computational systems biology project modeling the *Arabidopsis thaliana* circ
 
 ## Background
 
-The circadian clock of *Arabidopsis thaliana* is driven by interlocking transcription–translation feedback loops involving four gene clusters:
+The Arabidopsis circadian clock is driven by interlocking transcription-translation feedback loops. This model captures core clock components, the photomorphogenesis pathway (PhyA, PhyB, CRY1, COP1 and its complexes), and downstream outputs (PIF transcription factor, hypocotyl elongation).
 
 | Symbol | Genes          |
 |--------|----------------|
